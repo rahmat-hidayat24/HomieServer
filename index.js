@@ -192,6 +192,14 @@ app.post('/survei/add',(req,res)=>{
     })
 })
 
+// Tampilkan Survei
+app.get('/survei/list/:username',(req,res)=>{
+    conn.query(`select * from tbl_survei where username = '${req.params.username}'`,(err, rows)=>{
+        if(err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
 
 // Tambah Detail Transaksi
 app.post(`/transaksi/add`, (req, res) => {
