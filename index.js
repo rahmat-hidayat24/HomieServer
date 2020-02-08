@@ -200,7 +200,24 @@ app.get('/survei/list/:username',(req,res)=>{
     })
 })
 
+app.get('/survei/list/pemilik/:usernamePenerima',(req,res)=>{
+    conn.query(`select * from tbl_survei where usernamePenerima = '${req.params.usernamePenerima}'`,(err, rows)=>{
+        if(err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
 
+app.put('/survei/detail/:nomorSurvei',(req,res)=>{
+    conn.query(`UPDATE tbl_survei SET status = '${req.body.statusText}', penolakan = '${req.body.penolakan}' WHERE nomor_survei = '${req.params.nomorSurvei}'`, (err, rows) => {
+        if (err) {
+            res.status(500).json(err),
+            console.log(err)
+        }
+        else {
+            res.status(200).end() ,console.log(rows)
+        }
+    })
+})
 // Tambah Detail Transaksi
 app.post(`/transaksi/add`, (req, res) => {
     var no_transaksi = req.body.no_transaksi
