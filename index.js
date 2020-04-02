@@ -23,8 +23,8 @@ const conn = mysql.createConnection({
 // app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(bodyParser.json());
 
-app.use(bodyParser.json({limit:'5mb'})); 
-app.use(bodyParser.urlencoded({extended:true, limit:'5mb'}));
+app.use(bodyParser.json({ limit: '5mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '5mb' }));
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -85,32 +85,42 @@ app.post('/register', (req, res) => {
     var jk = req.body.jk
     var jenis = req.body.jenis
     var poto = req.body.poto
-    var queryCheck = `select username from tbl_user where username='${username}'`
     var queryStr = `INSERT INTO tbl_user (id, username, password, pin, nama, email,alamat ,kota ,tel ,jk ,jenis ,poto) VALUES ('', '${username}', '${password}','${pin}','${nama}','${email}','${alamat}','${kota}','${tel}','${jk}','${jenis}','${poto}') `;
     var queryStr1 = `INSERT INTO tbl_homiepay (id, username, nama, pin, tel, saldo) VALUES ('', '${username}', '${nama}','${pin}','${tel}','0');`
     console.log(username)
     console.log(password)
     console.log(jenis)
-    conn.query(queryCheck, (err, rows) => {
-        if (rows.length >= 1) res.status(400).json(err), console.log(err)
-        else if (req.body === null) { res.status(400).json(err), console.log(err) }
-        else conn.query(queryStr, (err, rows) => {
+    conn.query(queryStr, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else conn.query(queryStr1, (err, rows) => {
             if (err) res.status(400).json(err), console.log(err)
-            else conn.query(queryStr1, (err, rows) => {
-                if (err) res.status(400).json(err), console.log(err)
-                else res.status(200).json(rows), console.log(rows)
-            })
+            else res.status(200).json(rows), console.log(rows)
         })
-
     })
 })
 
+
+// Validasi Username
+app.get('/check/:username', (req, res) => {
+    var queryCheck = `select username from tbl_user where username='${req.params.username}'`
+    conn.query(queryCheck, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
 // Layanan
 
 // Tampilkan Homie Pay
 // SELECT * FROM tbl_homiepay as hp INNER JOIN tbl_bank as b on hp.nomorKartu = b.nomorKartu WHERE username='${req.params.username}'
 app.get('/homiepay/:username', (req, res) => {
     conn.query(`SELECT * FROM tbl_homiepay WHERE username='${req.params.username}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows[0]), console.log(rows[0])
+    })
+})
+
+app.get('/bank/:noRek', (req, res) => {
+    conn.query(`select * from tbl_bank where nomorKartu='${req.params.noRek}'`, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows[0]), console.log(rows[0])
     })
@@ -180,66 +190,139 @@ app.get('/layanan/pulsa/:tel', (req, res) => {
     })
 })
 
+// Tarik Saldo - Check Nomor Rekening Bank
 
+app.put(`/homiepay/tarik-saldo/:username`, (req, res) => {
+    var queryCheckBank = `select * from tbl_bank where noRek='${req.body.noRek}' and nama_bank='${req.body.namaBank}'`
+    var queryStr = `UPDATE tbl_homiepay SET saldo = '${req.body.saldo}' WHERE username = '${req.params.username}'`
+    conn.query(queryCheckBank, (err, rows) => {
+        if (rows.length === 0) res.status(400).json(err), console.log(err)
+        else if (req.body === null) { res.status(400).json(err), console.log(err) }
+        else {
+            var bank = rows[0]
+            conn.query(queryStr, (err, rows) => {
+                if (err) {
+                    res.status(500).json(err),
+                        console.log(err)
+                }
+                else {
+                    res.status(200).json({ bank: bank, homiepay: rows }), console.log(bank, rows)
+                }
+            })
+        }
+    })
+})
+
+// Post Notifikasi
+app.post('/notifikasi/add', (req, res) => {
+    var { notif_id, username, type, nomor, title, date, read_at } = req.body
+    conn.query(`INSERT INTO tbl_notifikasi (id, notif_id, username, type, nomor, title, date, read_at) VALUES ('', '${notif_id}', '${username}', '${type}', '${nomor}', '${title}', '${date}', '${read_at}')`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+
+// Tampil Notifikasi
+app.get('/notifikasi/list/:username', (req, res) => {
+    conn.query(`select * from tbl_notifikasi where username = '${req.params.username}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+
+// Tampil Riwayat
+app.get('/riwayat/list/:username', (req, res) => {
+    conn.query(`select * from tbl_transaksi where username = '${req.params.username}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
 
 // Tambah Survei
 
-app.post('/survei/add',(req,res)=>{
+app.post('/survei/add', (req, res) => {
     var { nomorSurvei, username, nama_hunian, tanggalSurvei, waktuSurvei, pesan, usernamePenerima, namaPenerima, tanggalBuat, status, nama } = req.body
-    conn.query(`INSERT INTO tbl_survei (id, nomor_survei, username, nama_hunian, tanggalSurvei, waktuSurvei, pesan, usernamePenerima, namaPenerima, tanggalBuat, status, nama) VALUES ('', '${nomorSurvei}', '${username}','${nama_hunian}','${tanggalSurvei}','${waktuSurvei}','${pesan}','${usernamePenerima}','${namaPenerima}','${tanggalBuat}','${status}','${nama}')`,(err, rows)=>{
+    conn.query(`INSERT INTO tbl_survei (id, nomor_survei, username, nama_hunian, tanggalSurvei, waktuSurvei, pesan, usernamePenerima, namaPenerima, tanggalBuat, status, nama) VALUES ('', '${nomorSurvei}', '${username}','${nama_hunian}','${tanggalSurvei}','${waktuSurvei}','${pesan}','${usernamePenerima}','${namaPenerima}','${tanggalBuat}','${status}','${nama}')`, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows), console.log(rows)
     })
 })
 
 // Tampilkan Survei
-app.get('/survei/list/:username',(req,res)=>{
-    conn.query(`select * from tbl_survei where username = '${req.params.username}'`,(err, rows)=>{
-        if(err) res.status(400).json(err), console.log(err)
-        else res.status(200).json(rows), console.log(rows)
-    })
-})
-
-app.get('/survei/list/pemilik/:usernamePenerima',(req,res)=>{
-    conn.query(`select * from tbl_survei where usernamePenerima = '${req.params.usernamePenerima}'`,(err, rows)=>{
-        if(err) res.status(400).json(err), console.log(err)
-        else res.status(200).json(rows), console.log(rows)
-    })
-})
-
-app.put('/survei/detail/:nomorSurvei',(req,res)=>{
-    conn.query(`UPDATE tbl_survei SET status = '${req.body.statusText}', penolakan = '${req.body.penolakan}' WHERE nomor_survei = '${req.params.nomorSurvei}'`, (err, rows) => {
-        if (err) {
-            res.status(500).json(err),
-            console.log(err)
-        }
-        else {
-            res.status(200).end() ,console.log(rows)
-        }
-    })
-})
-// Tambah Detail Transaksi
-app.post(`/transaksi/add`, (req, res) => {
-    var no_transaksi = req.body.no_transaksi
-    var jenisTransaksi = req.body.jenisTransaksi
-    var kategoriTransaksi = req.body.kategoriTransaksi
-    var pemilik = req.body.pemilik
-    var nama_hunian = req.body.nama_hunian
-    var username = req.body.username
-    var nama = req.body.nama
-    var no_kamar = req.body.no_kamar
-    var tgl_masuk = req.body.tgl_masuk
-    var tgl_keluar = req.body.tgl_keluar
-    var tgl_transaksi = req.body.date
-    var kodePromo = req.body.kodePromo
-    var nominal = req.body.nominal
-    var metode = req.body.metode
-    conn.query(`INSERT INTO tbl_transaksi (id, no_transaksi, jenisTransaksi, kategoriTransaksi, pemilik,nama_hunian,username, nama, no_kamar, tgl_masuk, tgl_keluar, tgl_transaksi, kodePromo, nominal, metode) VALUES ('','${no_transaksi}','${jenisTransaksi}','${kategoriTransaksi}','${pemilik}', '${nama_hunian}','${username}','${nama}', '${no_kamar}', '${tgl_masuk}', '${tgl_keluar}','${tgl_transaksi}', '${kodePromo}','${nominal}', '${metode}')`, (err, rows) => {
+app.get('/survei/list/:username', (req, res) => {
+    conn.query(`select * from tbl_survei where username = '${req.params.username}'`, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows), console.log(rows)
     })
 })
 
+app.get('/survei/list/pemilik/:usernamePenerima', (req, res) => {
+    conn.query(`select * from tbl_survei where usernamePenerima = '${req.params.usernamePenerima}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+app.put('/survei/detail/:nomor_survei', (req, res) => {
+    conn.query(`UPDATE tbl_survei SET status = '${req.body.statusText}', penolakan = '${req.body.penolakan}' WHERE nomor_survei = '${req.params.nomor_survei}'`, (err, rows) => {
+        if (err) {
+            res.status(500).json(err), console.log(err)
+        }
+        else {
+            res.status(200).json(rows), console.log(rows)
+        }
+    })
+})
+
+
+// Tambah Detail Transaksi
+app.post(`/transaksi/add`, (req, res) => {
+    var { no_transaksi, jenisTransaksi, kategoriTransaksi, namaTransaksi, nomor, pemilik, nama_hunian, username, nama, no_kamar, tgl_masuk, tgl_keluar, jangkaWaktu, tgl_transaksi, kodePromo, nominal, periode, metode, status, ref } = req.body
+    conn.query(`INSERT INTO tbl_transaksi (id, no_transaksi, jenisTransaksi, kategoriTransaksi, namaTransaksi,nomor, pemilik,nama_hunian,username, nama, no_kamar, tgl_masuk, tgl_keluar, jangkaWaktu, tgl_transaksi, kodePromo, nominal, periode, metode, status, ref) VALUES ('','${no_transaksi}','${jenisTransaksi}','${kategoriTransaksi}','${namaTransaksi}','${nomor}','${pemilik}', '${nama_hunian}','${username}','${nama}', '${no_kamar}', '${tgl_masuk}', '${tgl_keluar}','${jangkaWaktu}','${tgl_transaksi}', '${kodePromo}','${nominal}', '${periode}', '${metode}','${status}', '${ref}')`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+// Tampil List Transaksi
+
+app.get('/transaksi/list/:username', (req, res) => {
+    conn.query(`select * from tbl_transaksi where username = '${req.params.username}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+// Tampil Detail Transaksi
+
+app.get('/transaksi/detail/:nomorTransaksi', (req, res) => {
+    conn.query(`select * from tbl_transaksi where no_transaksi = '${req.params.nomorTransaksi}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+
+
+// Tambah Penghuni
+app.post('/penghuni/add', (req, res) => {
+    var { usernamePenghuni, namaPenghuni, nama_hunian, pemilik, nama_kamar, jangkaWaktu, tgl_masuk, tgl_keluar, tgl_pembayaran, statusPembayaran } = req.body
+    conn.query(`INSERT INTO tbl_penghuni VALUES('','${usernamePenghuni}','${namaPenghuni}','${nama_hunian}','${pemilik}','${nama_kamar}','${jangkaWaktu}','${tgl_masuk}','${tgl_keluar}','${tgl_pembayaran}','${statusPembayaran}')`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
+
+
+// List Tempat Hunian Penghuni
+app.get('/penghuni/:username',(req,res)=>{
+    conn.query(`SELECT tbl_penghuni.usernamePenghuni, tbl_penghuni.namaPenghuni, tbl_penghuni.nama_hunian, tbl_penghuni.pemilik, tbl_penghuni.nama_kamar, tbl_penghuni.jangkaWaktu, tbl_penghuni.tgl_masuk, tbl_penghuni.tgl_keluar, tbl_penghuni.tgl_pembayaran, tbl_penghuni.statusPembayaran, tbl_hunian.tel, tbl_hunian.alamat_hunian , tbl_hunian.harga_hunian_day, tbl_hunian.harga_hunian_week, tbl_hunian.harga_hunian_month, tbl_hunian.harga_hunian_year FROM tbl_penghuni INNER JOIN tbl_hunian ON  tbl_hunian.nm_hunian = tbl_penghuni.nama_hunian WHERE usernamePenghuni = '${req.params.username}'`,(err,rows)=>{
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows[0]), console.log(rows[0])
+    })
+})
 
 
 // Tambah Hunian
@@ -248,6 +331,7 @@ app.post('/hunian/add', (req, res) => {
     var namaHunian = req.body.namaHunian
     var username = req.body.username
     var pemilik = req.body.pemilik
+    var tel = req.body.tel
     var alamatHunian = req.body.alamatHunian
     var tipeHunian = req.body.tipeHunian
     var luasHunian = req.body.luasHunian
@@ -264,18 +348,29 @@ app.post('/hunian/add', (req, res) => {
     var hargaHunianWeek = req.body.hargaHunianWeek
     var hargaHunianMonth = req.body.hargaHunianMonth
     var hargaHunianYear = req.body.hargaHunianYear
+    var denda = req.body.denda
     var poto = req.body.poto
     var deskripsi = req.body.deskripsi
     var lang = req.body.lang
     var long = req.body.long
     var datePost = req.body.datePost
-    var queryStr = `INSERT INTO tbl_hunian (id, nm_hunian, username,pemilik ,alamat_hunian, tipe_hunian, luasHunian, jenisListrik, penghuni, pet,luasTanah ,luasKamar ,jlhLantai ,jlhKT ,jlhKM ,nama_fasilitas ,harga_hunian_day ,harga_hunian_week ,harga_hunian_month ,harga_hunian_year ,poto , deskripsi,langtitude,longtitude,datePost) VALUES ('', '${namaHunian}', '${username}','${pemilik}','${alamatHunian}','${tipeHunian}','${luasHunian}','${jenisListrik}', '${penghuni}','${pet}','${luasTanah}','${luasKamar}','${jlhLantai}','${jlhKT}','${jlhKM}', '${fasilitasHunian}','${hargaHunianDay}' ,'${hargaHunianWeek}' ,'${hargaHunianMonth}' ,'${hargaHunianYear}' ,'${poto}', '${deskripsi}', '${lang}', '${long}', '${datePost}')`;
+    var queryStr = `INSERT INTO tbl_hunian (id, nm_hunian, username,pemilik,tel ,alamat_hunian, tipe_hunian, luasHunian, jenisListrik, penghuni, pet,luasTanah ,luasKamar ,jlhLantai ,jlhKT ,jlhKM ,nama_fasilitas ,harga_hunian_day ,harga_hunian_week ,harga_hunian_month ,harga_hunian_year ,denda ,poto , deskripsi,langtitude,longtitude,datePost) VALUES ('', '${namaHunian}', '${username}','${pemilik}','${tel}','${alamatHunian}','${tipeHunian}','${luasHunian}','${jenisListrik}', '${penghuni}','${pet}','${luasTanah}','${luasKamar}','${jlhLantai}','${jlhKT}','${jlhKM}', '${fasilitasHunian}','${hargaHunianDay}' ,'${hargaHunianWeek}' ,'${hargaHunianMonth}' ,'${hargaHunianYear}' ,'${denda}','${poto}', '${deskripsi}', '${lang}', '${long}', '${datePost}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows), console.log(rows)
     })
 })
 
+
+
+// Delete Hunian
+
+app.delete('/hunian/:username/:nama_hunian', (req, res) => {
+    conn.query(`delete from tbl_hunian where username='${req.params.username}' and nm_hunian ='${req.params.nama_hunian}'`, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows), console.log(rows)
+    })
+})
 // Upload Foto
 
 app.post('/upload-foto/:username', (req, res) => {
@@ -291,7 +386,7 @@ app.post('/upload-foto/:username', (req, res) => {
             if (err) res.status(400).json(err), console.log(err)
             else res.status(200).json({ message: 'success' }), console.log(res)
         })
-        console.log(filename)
+    console.log(filename)
     conn.query(`UPDATE tbl_user SET poto = '${filename}' WHERE username ='${req.params.username}'`)
 })
 
@@ -302,7 +397,7 @@ app.put('/profile/edit/:username', (req, res) => {
     conn.query(`UPDATE tbl_user SET nama = '${req.body.nama}', alamat = '${req.body.alamat}' , kota = '${req.body.kota}' , email = '${req.body.email}' , tel = '${req.body.tel}' WHERE username = '${req.params.username}'`, (err, rows) => {
         if (err) {
             res.status(500).json(err),
-            console.log(err)
+                console.log(err)
         }
         else {
             res.status(200).end()
@@ -324,7 +419,13 @@ app.post('/kamar/add', (req, res) => {
     var lokasi_kamar = req.body.lokasi_kamar
     var maxPerson = req.body.kapasitas_kamar
     var namaFasilitas = req.body.namaFasilitas
-    var queryStr = `INSERT INTO tbl_kamar (id, no_kamar,nama_kamar, nama_hunian, pemilik, username, nama, maxPerson, status, nama_fasilitas, lokasi_kamar) VALUES ('', '${no_kamar}','${nama_kamar}','${nama_hunian}','${pemilik}','${username}','${nama}','${maxPerson}','${status}','${namaFasilitas}','${lokasi_kamar}')`;
+    var usernamePenghuni = req.body.usernamePenghuni
+    var namaPenghuni = req.body.namaPenghuni
+    var jangkaWaktu = req.body.jangkaWaktu
+    var tgl_masuk = req.body.tgl_masuk
+    var tgl_keluar = req.body.tgl_keluar
+    var statusPembayaran = req.body.statusPembayaran
+    var queryStr = `INSERT INTO tbl_kamar (id, no_kamar,nama_kamar, nama_hunian, pemilik, username, nama, maxPerson, status, nama_fasilitas, lokasi_kamar, usernamePenghuni, namaPenghuni, jangkaWaktu, tgl_masuk, tgl_keluar, statusPembayaran) VALUES ('', '${no_kamar}','${nama_kamar}','${nama_hunian}','${pemilik}','${username}','${nama}','${maxPerson}','${status}','${namaFasilitas}','${lokasi_kamar}','${usernamePenghuni}','${namaPenghuni}','${jangkaWaktu}','${tgl_masuk}','${tgl_keluar}','${statusPembayaran}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows), console.log(rows)
@@ -370,13 +471,26 @@ app.get('/hunian/:pemilik/:nm_hunian', (req, res) => {
 // Menampilkan Kamar
 
 app.get('/kamar/:nm_hunian', (req, res) => {
-    conn.query(`SELECT * FROM tbl_kamar where nama_hunian = '${req.params.nm_hunian}' GROUP BY nama_kamar`, (err, rows) => {
+    conn.query(`SELECT * FROM tbl_kamar where nama_hunian = '${req.params.nm_hunian}'`, (err, rows) => {
         if (err) { res.status(500).json(err) }
         else { res.status(200).json(rows) }
     })
 })
 
-// Menampilkan SemuaHunian Penghuni / Calon Penghuni
+
+// Tambah Penghuni
+
+app.post(`/kamar/penghuni/add`, (req, res) => {
+    var { usernamePenghuni, namaPenghuni, nama_hunian, pemilik, nama_kamar, jangkaWaktu, tgl_masuk, tgl_keluar, tgl_pembayaran, statusPembayaran } = req.body
+    conn.query(`insert into tbl_penghuni('id,namaPenghuni, namaPenghuni, nama_hunian, pemilik, nama_kamar, jangkaWaktu, tgl_masuk, tgl_keluar, tgl_pembayaran, statusPembayaran') values ('',${usernamePenghuni},${namaPenghuni}, ${nama_hunian},${pemilik},${nama_kamar},${jangkaWaktu}, ${tgl_masuk}, ${tgl_keluar}, ${tgl_pembayaran},${statusPembayaran})'`, (err, rows) => {
+        if (err) res.status(500).json(err)
+        else res.status(200).json(rows)
+    })
+})
+
+
+
+// Menampilkan Semua sHunian Penghuni / Calon Penghuni
 
 app.get('/hunian', (req, res) => {
     conn.query(`select * from tbl_hunian order by datePost desc`, (err, rows) => {
