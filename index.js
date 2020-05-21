@@ -102,7 +102,7 @@ app.post('/register', (req, res) => {
     var jk = req.body.jk
     var jenis = req.body.jenis
     var poto = req.body.poto
-    var queryStr = `INSERT INTO tbl_user (id, username, password, pin, nama, email,alamat ,kota ,tel ,jk ,jenis ,poto) VALUES ('', '${username}', '${password}','','${nama}','${email}','${alamat}','${kota}','${tel}','${jk}','${jenis}','${poto}') `;
+    var queryStr = `INSERT INTO tbl_user VALUES ('', '${username}', '${password}','${nama}','${email}','${alamat}','${kota}','${tel}','${jk}','${jenis}','${poto}','') `;
     var queryStr1 = `INSERT INTO tbl_homiepay (id, username, nama, pin, tel, saldo) VALUES ('', '${username}', '${nama}','${pin}','${tel}','0');`
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
@@ -164,7 +164,7 @@ app.put('/profile/edit/:username', (req, res) => {
 
     console.log(req.body)
 
-    conn.query(`UPDATE tbl_user SET nama = '${req.body.nama}', alamat = '${req.body.alamat}' , kota = '${req.body.kota}' , email = '${req.body.email}' , tel = '${req.body.tel}' WHERE username = '${req.params.username}'`, (err, rows) => {
+    conn.query(`UPDATE tbl_user SET nama = '${req.body.nama}', alamat = '${req.body.alamat}' , kota = '${req.body.kota}' , email = '${req.body.email}' , tel = '${req.body.tel}', team= '${req.body.team}' WHERE username = '${req.params.username}'`, (err, rows) => {
         if (err) {
             res.status(500).json(err),
                 console.log(err)
@@ -328,14 +328,14 @@ app.post('/survei/add', (req, res) => {
     var { idHunian, nomorSurvei, username, nama_hunian, tanggalSurvei, waktuSurvei, pesan, usernamePenerima, namaPenerima, tanggalBuat, status, nama } = req.body
     // 	
     conn.query(`INSERT INTO tbl_survei VALUES ('','${idHunian}' ,'${nomorSurvei}', '${username}','${nama}' ,'${nama_hunian}','${tanggalSurvei}','${waktuSurvei}','${pesan}','${usernamePenerima}','${namaPenerima}','${tanggalBuat}','${status}','')`, (err, rows) => {
-        if (err) res.status(400).json({message : 'Survei Gagal Dikirim'}), console.log(err)
+        if (err) res.status(400).json({ message: 'Survei Gagal Dikirim' }), console.log(err)
         else res.status(200).json(rows)
     })
 })
 
 // Tampilkan Survei
 app.get('/survei/list/:username', (req, res) => {
-    conn.query(`select * from tbl_survei where username = '${req.params.username}'`, (err, rows) => {
+    conn.query(`select * from tbl_survei where username = '${req.params.username}' order by tanggalBuat`, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
         else res.status(200).json(rows)
     })
@@ -382,14 +382,14 @@ app.get('/transaksi/list/:username', (req, res) => {
 // Tampil Detail Transaksi
 app.get('/transaksi/detail/:nomorTransaksi', (req, res) => {
     conn.query(`select * from tbl_transaksi where no_transaksi = '${req.params.nomorTransaksi}'`, (err, rows) => {
-        if(rows[0].namaTransaksi == 'Tarik Saldo'){
-            conn.query(`select tbl_transaksi.* , tbl_bank.noRek, tbl_bank.nasabah, tbl_bank.nama_bank from tbl_transaksi INNER JOIN tbl_bank on tbl_transaksi.nomor = tbl_bank.noRek where no_transaksi = '${req.params.nomorTransaksi}'`,(err,rows)=>{
-                if(err) res.status(400).json(err), console.log(err)
-                else res.status(200).json(rows),console.log(rows)
+        if (rows[0].namaTransaksi == 'Tarik Saldo') {
+            conn.query(`select tbl_transaksi.* , tbl_bank.noRek, tbl_bank.nasabah, tbl_bank.nama_bank from tbl_transaksi INNER JOIN tbl_bank on tbl_transaksi.nomor = tbl_bank.noRek where no_transaksi = '${req.params.nomorTransaksi}'`, (err, rows) => {
+                if (err) res.status(400).json(err), console.log(err)
+                else res.status(200).json(rows), console.log(rows)
             })
         } else {
             if (err) res.status(400).json(err), console.log(err)
-            else res.status(200).json(rows),console.log(rows)
+            else res.status(200).json(rows), console.log(rows)
         }
     })
 })
@@ -400,37 +400,45 @@ app.get('/transaksi/detail/:nomorTransaksi', (req, res) => {
 app.post('/penghuni/add', (req, res) => {
     var { idHunian, idKamar, usernamePenghuni, namaPenghuni, nama_hunian, pemilik, nama_kamar, jangkaWaktu, tgl_masuk, tgl_keluar, tgl_pembayaran, statusPembayaran, no_transaksi } = req.body
 
-    conn.query(`INSERT INTO tbl_penghuni VALUES('','${idHunian}','${idKamar}','${usernamePenghuni}','${namaPenghuni}','${nama_hunian}','${pemilik}','${nama_kamar}','${jangkaWaktu}','${tgl_masuk}','${tgl_keluar}','${tgl_pembayaran}','${statusPembayaran}', ${no_transaksi})`, (err, rows) => {
+    conn.query(`INSERT INTO tbl_penghuni VALUES('','${idHunian}','${idKamar}','${usernamePenghuni}','${namaPenghuni}','${nama_hunian}','${pemilik}','${nama_kamar}','${jangkaWaktu}','${tgl_masuk}','${tgl_keluar}','${tgl_pembayaran}','${statusPembayaran}', '${no_transaksi}')`, (err, rows) => {
 
-        conn.query(`select currentPerson, maxPerson from tbl_kamar WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
-
-            if (statusPembayaran === 'Pending') {
-                console.log('Status Pembayaran Pending')
-            } else {
-                var updatePerson = parseInt(rows[0].currentPerson) + parseInt(1)
-                var maxPerson = rows[0].maxPerson
-
-                if (parseInt(updatePerson) === parseInt(maxPerson)) {
-
-                    conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' , status = 'Full' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
-
-                        if (err) res.status(400).json(err), console.log(err)
-                        else res.status(200).json(rows)
-                    })
-
-                } else {
-
-                    conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
-
-                        if (err) res.status(400).json(err), console.log(err)
-                        else res.status(200).json(rows)
-                    })
+        if(err){
+            res.status(500).json(err)
+        } else {
+            conn.query(`select currentPerson, maxPerson from tbl_kamar WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+                if(err){
+                    res.status(500).json(err), console.log(err)
                 }
-            }
-
-        })
+                else {
+                    if (statusPembayaran === 'Pending') {
+                        console.log('Status Pembayaran Pending')
+                    } else {
+                        var updatePerson = parseInt(rows[0].currentPerson) + parseInt(1)
+                        var maxPerson = rows[0].maxPerson
+        
+                        if (parseInt(updatePerson) === parseInt(maxPerson)) {
+        
+                            conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' , status = 'Full' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+        
+                                if (err) res.status(400).json(err), console.log(err)
+                                else res.status(200).json(rows)
+                            })
+        
+                        } else {
+                            conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+        
+                                if (err) res.status(400).json(err), console.log(err)
+                                else res.status(200).json(rows)
+                            })
+                        }
+                    }
+                }
+                
+            })
+        }
     })
 })
+
 
 // Penghuni Berhenti 
 app.delete('/hunian/penghuni/:usernamePenghuni/:nama_hunian/:pemilik/:nama_kamar', (req, res) => {
@@ -438,7 +446,7 @@ app.delete('/hunian/penghuni/:usernamePenghuni/:nama_hunian/:pemilik/:nama_kamar
         conn.query(`select currentPerson, maxPerson from tbl_kamar WHERE nama_hunian = '${req.params.nama_hunian}' AND pemilik = '${req.params.pemilik}' AND nama_kamar = '${req.params.nama_kamar}'`, (err, rows) => {
             var updatePerson = parseInt(rows[0].currentPerson) - parseInt(1)
             console.log(updatePerson)
-            conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' WHERE nama_hunian = '${req.params.nama_hunian}' AND pemilik = '${req.params.pemilik}' AND nama_kamar = '${req.params.nama_kamar}'`, (err, rows) => {
+            conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}', status='Kosong' WHERE nama_hunian = '${req.params.nama_hunian}' AND pemilik = '${req.params.pemilik}' AND nama_kamar = '${req.params.nama_kamar}'`, (err, rows) => {
                 if (err) res.status(400).json(err), console.log(err)
                 else { res.status(200).json(rows), console.log('Berhasil Berhenti') }
             })
@@ -448,20 +456,44 @@ app.delete('/hunian/penghuni/:usernamePenghuni/:nama_hunian/:pemilik/:nama_kamar
 
 
 // Penghuni Update Status
-app.put('/penghuni/update/:no_transaksi', (req, res) => {
-    conn.query(`UPDATE tbl_penghuni SET statusPembayaran = '${req.body.statusPembayaran}' WHERE no_transaksi = '${req.params.no_transaksi}'`, (err, rows) => {
+app.put('/penghuni/update/:id', (req, res) => {
+    const  {idHunian, idKamar, no_transaksi} = req.query
+    conn.query(`UPDATE tbl_penghuni SET statusPembayaran = '${req.body.statusPembayaran}' WHERE id = '${req.params.id}'`, (err, rows) => {
         if (err) {
-            res.status(500).json(err),
-                console.log(err)
+            res.status(500).json(err)
         }
         else {
-            conn.query(`UPDATE tbl_transaksi SET status = '${req.body.statusPembayaran}' WHERE no_transaksi = '${req.params.no_transaksi}'`, (err, rows) => {
+            conn.query(`UPDATE tbl_transaksi SET status = '${req.body.statusPembayaran}' WHERE no_transaksi = '${no_transaksi}'`, (err, rows) => {
                 if (err) {
-                    res.status(500).json(err),
-                        console.log(err)
+                    res.status(500).json(err)
                 }
                 else {
-                    res.status(200).end()
+                    conn.query(`select currentPerson, maxPerson from tbl_kamar WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+                        if(err){
+                            res.status(500).json(err), console.log(err)
+                        }
+                        else {
+                                var updatePerson = parseInt(rows[0].currentPerson) + parseInt(1)
+                                var maxPerson = rows[0].maxPerson
+                
+                                if (parseInt(updatePerson) === parseInt(maxPerson)) {
+                
+                                    conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' , status = 'Full' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+                
+                                        if (err) res.status(400).json(err), console.log(err)
+                                        else res.status(200).json(rows)
+                                    })
+                
+                                } else {
+                                    conn.query(`UPDATE tbl_kamar SET currentPerson = '${updatePerson}' WHERE idHunian = '${idHunian}' AND idkamar = '${idKamar}'`, (err, rows) => {
+                
+                                        if (err) res.status(400).json(err), console.log(err)
+                                        else res.status(200).json(rows)
+                                    })
+                                }
+                            }
+                        
+                    })
                 }
             })
         }
@@ -471,24 +503,24 @@ app.put('/penghuni/update/:no_transaksi', (req, res) => {
 
 // Tambah Laporan Masalah
 app.post('/laporan/masalah/add', (req, res) => {
-    var { idHunian, idKamar ,idReport, usernamePenghuni, usernamePemilik, nama_hunian, namaPemilik, nama_kamar, masalah, deskripsi, date_create, date_proses, statusReport, namaPenghuni, poto } = req.body
+    var { idHunian, idKamar, idReport, usernamePenghuni, usernamePemilik, nama_hunian, namaPemilik, nama_kamar, masalah, deskripsi, date_create, date_proses, statusReport, namaPenghuni, poto } = req.body
 
     conn.query(`insert into tbl_masalah values('','${idHunian}','${idKamar}','${idReport}', '${usernamePenghuni}','${usernamePemilik}','${nama_hunian}','${namaPemilik}','${nama_kamar}', '${masalah}', '${deskripsi}','${date_create}','${date_proses}','${statusReport}','${namaPenghuni}','')`, (err, rows) => {
-        if (err) res.status(500).json({message : 'Gagal Mengirimkan Laporan'}),console.log(err)
+        if (err) res.status(500).json({ message: 'Gagal Mengirimkan Laporan' }), console.log(err)
         else { res.status(200).json(rows), console.log('Berhasil Ditambahkan') }
     })
 })
 
 // Tambah Foto Laporan Masalah
 app.post('/uploadFoto/:nama_hunian/:pemilik', (req, res) => {
-    if (req.body.poto == ''){
+    if (req.body.poto == '') {
         var filename = ''
     } else {
         var poto = req.body.poto
         var masalah = req.body.masalah
         var d = Date.now();
         var filename = masalah + '_' + d + '_IMAGE.jpg';
-    
+
         var binaryData = new Buffer(poto, 'base64').toString('binary')
         // console.log('Test - ' , binaryData)
         fs.writeFile(__dirname + '/images/masalah/' + filename, binaryData, 'binary',
@@ -497,19 +529,19 @@ app.post('/uploadFoto/:nama_hunian/:pemilik', (req, res) => {
                 else res.status(200).json({ message: 'success' }), console.log('Success')
             })
     }
-    
+
     conn.query(`UPDATE tbl_masalah SET poto = '${filename}' WHERE nama_hunian='${req.params.nama_hunian}' and namaPemilik='${req.params.pemilik}'`)
 })
 
 // Tampilkan Laporan Masalah
 app.get('/laporan/masalah/list/:jenis/:username', (req, res) => {
     if (req.params.jenis === 'Pemilik') {
-        conn.query(`select * from tbl_masalah where usernamePemilik='${req.params.username}'`, (err, rows) => {
+        conn.query(`select * from tbl_masalah where usernamePemilik='${req.params.username}' ORDER by date_create DESC`, (err, rows) => {
             if (err) res.status(500).json(err)
             else { res.status(200).json(rows), console.log('List Pemilik Done !!!') }
         })
     } else if (req.params.jenis === 'Penghuni') {
-        conn.query(`select * from tbl_masalah where usernamePenghuni='${req.params.username}'`, (err, rows) => {
+        conn.query(`select * from tbl_masalah where usernamePenghuni='${req.params.username}' ORDER by date_create DESC`, (err, rows) => {
             if (err) res.status(500).json(err)
             else { res.status(200).json(rows), console.log('List Penghuni Done !!!') }
         })
@@ -517,8 +549,10 @@ app.get('/laporan/masalah/list/:jenis/:username', (req, res) => {
 })
 
 // Update Status Masalah
-app.put('/update/laporan/masalah/:idReport', (req, res) => {
-    conn.query(`update tbl_masalah set statusReport='${req.body.statusReport}'`, (err, rows) => {
+app.put('/update/laporan/masalah/:id', (req, res) => {
+    console.log(req.body.statusReport)
+    console.log(req.params.idReport)
+    conn.query(`update tbl_masalah set statusReport='${req.body.statusReport}' where id='${req.params.id}'`, (err, rows) => {
         if (err) res.status(500).json(err)
         else { res.status(200).json(rows), console.log('Update Done !!!') }
     })
@@ -566,7 +600,7 @@ app.get('/shareroom/list/:jenis/:username', (req, res) => {
 
 // update status ShareRoom
 app.put('/shareroom/update/:id', (req, res) => {
-    conn.query(`update tbl_shareroom set statusPermintaan='${req.body.statusPermintaan}' where id=${req.params.id}`, (err, rows) => {
+    conn.query(`update tbl_shareroom set statusPermintaan='${req.body.statusPermintaan}' where id='${req.params.id}'`, (err, rows) => {
         if (err) res.status(500).json({ message: 'Gagal Update' })
         else { res.status(200).json({ message: 'Berhasil Update' }), console.log('Berhasil Update Status') }
     })
@@ -624,27 +658,27 @@ app.get('/penghuni/list/:nama_hunian/:pemilik/:statusPembayaran', (req, res) => 
 
 // Tambah Hunian
 app.post('/hunian/add', (req, res) => {
-    var {namaHunian,username, pemilik, tel,alamatHunian, tipeHunian,luasHunian,jenisListrik, penghuni,pet,luasTanah,luasKamar,jlhLantai,jlhKT,jlhKM, fasilitasHunian,hargaHunianDay, hargaHunianWeek,hargaHunianMonth,hargaHunianYear, denda, poto, deskripsi,lang, long,datePost} = req.body
+    var { namaHunian, username, pemilik, tel, alamatHunian, tipeHunian, luasHunian, jenisListrik, penghuni, pet, luasTanah, luasKamar, jlhLantai, jlhKT, jlhKM, fasilitasHunian, hargaHunianDay, hargaHunianWeek, hargaHunianMonth, hargaHunianYear, denda, poto, deskripsi, lang, long, datePost } = req.body
     var queryStr = `INSERT INTO tbl_hunian VALUES ('', '${namaHunian}', '${username}','${pemilik}','${tel}','${alamatHunian}','${tipeHunian}','${luasHunian}', '${penghuni}','${pet}','${luasTanah}','${luasKamar}','${jenisListrik}','${jlhLantai}','${jlhKT}','${jlhKM}', '${fasilitasHunian}','${hargaHunianDay}' ,'${hargaHunianWeek}' ,'${hargaHunianMonth}' ,'${hargaHunianYear}' ,'${denda}','${poto}', '${deskripsi}', '${lang}', '${long}', '${datePost}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
-        else res.status(200).json({idHunian : rows.insertId})
+        else res.status(200).json({ idHunian: rows.insertId })
     })
 })
 
 
-app.post('/hunian/uploadPhoto/:idHunian',upload.array('images') , (req,res) => {
-    console.log(req.files , 'File')
+app.post('/hunian/uploadPhoto/:idHunian', upload.array('images'), (req, res) => {
+    console.log(req.files, 'File')
     var Imagelist = [];
-    for(var i = 0; i<req.files.length; i++){
+    for (var i = 0; i < req.files.length; i++) {
         Imagelist.push([req.files[i].filename])
     }
     var joinArray = Imagelist.join()
     console.log(joinArray)
-    conn.query(`UPDATE tbl_hunian SET poto = '${joinArray}' WHERE idHunian='${req.params.idHunian}'`,(err,rows)=>{
+    conn.query(`UPDATE tbl_hunian SET poto = '${joinArray}' WHERE idHunian='${req.params.idHunian}'`, (err, rows) => {
         console.log(req.params.idHunian)
     })
-    res.status(200).json({message : 'Berhasil'}), console.log('Upload Done')
+    res.status(200).json({ message: 'Berhasil' }), console.log('Upload Done')
 })
 
 // Delete Hunian
@@ -658,7 +692,7 @@ app.delete('/hunian/delete/:idHunian', (req, res) => {
 
 // Tambah Kamar
 app.post('/kamar/add', (req, res) => {
-    const {idHunian, no_kamar, nama_hunian, pemilik, username, nama, status, nama_kamar, lokasi_kamar, maxPerson, currentPerson, namaFasilitas} = req.body
+    const { idHunian, no_kamar, nama_hunian, pemilik, username, nama, status, nama_kamar, lokasi_kamar, maxPerson, currentPerson, namaFasilitas } = req.body
     var queryStr = `INSERT INTO tbl_kamar  VALUES ('','${idHunian}','${no_kamar}','${nama_kamar}','${nama_hunian}','${pemilik}','${username}','${nama}','${maxPerson}','${currentPerson}','${status}','${namaFasilitas}','${lokasi_kamar}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
@@ -725,8 +759,7 @@ app.get('/kamar/:nm_hunian', (req, res) => {
 // Menampilkan Semua Hunian Penghuni / Calon Penghuni
 
 app.get('/hunian', (req, res) => {
-    console.log(req.query.role)
-    conn.query(`select tbl_hunian.*,tbl_user.poto as userPoto, SUM(tbl_kamar.currentPerson) as statusKamarTerisi ,  SUM(tbl_kamar.maxPerson) as statusKamarMaks , SUM(CASE WHEN tbl_kamar.status = 'Kosong' THEN 1 else 0 end) as kamarTersedia , COUNT(tbl_kamar.nama_kamar) as jumlahKamar  from tbl_hunian JOIN tbl_user on tbl_hunian.username = tbl_user.username JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian GROUP BY tbl_hunian.nm_hunian order by datePost ASC`, (err, rows) => {
+    conn.query(`select tbl_hunian.*,tbl_user.poto as userPoto, SUM(tbl_kamar.currentPerson) as statusKamarTerisi ,  SUM(tbl_kamar.maxPerson) as statusKamarMaks , SUM(CASE WHEN tbl_kamar.status = 'Kosong' THEN 1 else 0 end) as kamarTersedia , COUNT(tbl_kamar.nama_kamar) as jumlahKamar  from tbl_hunian JOIN tbl_user on tbl_hunian.username = tbl_user.username JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian GROUP BY tbl_hunian.nm_hunian order by datePost DESC`, (err, rows) => {
         if (err) { res.status(500).json(err) }
         else { res.status(200).json(rows) }
 
@@ -739,7 +772,7 @@ app.get('/hunian', (req, res) => {
 // Chat
 // Tambah Chat
 app.post('/Chat/add', (req, res) => {
-    const {idHunian, chatId, usernamePemilik, usernamePenghuni, usernameSend, jenis, nama, pemilik, namaHunian, message, date, time, status} = req.body
+    const { idHunian, chatId, usernamePemilik, usernamePenghuni, usernameSend, jenis, nama, pemilik, namaHunian, message, date, time, status } = req.body
     var queryStr = `INSERT INTO tbl_chat VALUES ('','${idHunian}','${chatId}' ,'${usernamePenghuni}','${usernamePemilik}','${usernameSend}','${jenis}', '${nama}','${pemilik}', '${namaHunian}','${message}', '${date}','${time}','${status}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) { res.status(400).json(err), console.log('Gagal Ditambahkan', err) }
@@ -802,7 +835,7 @@ app.get('/Chat/list/penghuni/:username', (req, res) => {
 
 app.post('/Ulasan/add', (req, res) => {
 
-    const {idUlasan, idHunian, username, nama, jenis, ulasan, date, starFasilitas, starHarga, starKeamanan, starKebersihan,starKenyamanan} = req.body
+    const { idUlasan, idHunian, username, nama, jenis, ulasan, date, starFasilitas, starHarga, starKeamanan, starKebersihan, starKenyamanan } = req.body
     var queryStr = `INSERT INTO tbl_ulasan VALUES ('','${idUlasan}','${idHunian}','${username}','${nama}','${jenis}','${ulasan}','','${date}','${starFasilitas}','${starHarga}','${starKeamanan}','${starKebersihan}','${starKenyamanan}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
@@ -821,7 +854,7 @@ app.post('/ulasan/uploadPoto/:idUlasan', (req, res) => {
     fs.writeFile(__dirname + '/images/ulasan/' + filename, binaryData, 'binary',
         (err) => {
             if (err) res.status(400).json(err)
-            else {res.status(200).json({ message: 'success' })}
+            else { res.status(200).json({ message: 'success' }) }
         })
     conn.query(`UPDATE tbl_ulasan SET poto = '${filename}' WHERE idUlasan='${req.params.idUlasan}'`)
 })
@@ -838,41 +871,41 @@ app.get('/Ulasan/:idHunian', (req, res) => {
 // Sisi Admin
 
 // List User
-app.get('/list/user',(req,res)=>{
+app.get('/list/user', (req, res) => {
     console.log(req.query.screen)
-    if(req.query.screen == 'Laporan User'){
-        conn.query(`select * from tbl_user where jenis <> 'Admin'`, (err,rows)=>{
-            if (err) res.status(500).json({message : 'List User Gagal'}), console.log(err)
+    if (req.query.screen == 'Laporan User') {
+        conn.query(`select * from tbl_user where jenis <> 'Admin'`, (err, rows) => {
+            if (err) res.status(500).json({ message: 'List User Gagal' }), console.log(err)
             else res.status(200).json(rows), console.log('Berhasil List User')
         })
-    } else if(req.query.screen == 'Setting'){
-        conn.query(`select * from tbl_user where jenis = 'Admin' AND username <> '${req.query.username}'`, (err,rows)=>{
-            if (err) res.status(500).json({message : 'List User Gagal'}), console.log(err)
+    } else if (req.query.screen == 'Setting') {
+        conn.query(`select * from tbl_user where jenis = 'Admin' AND username <> '${req.query.username}'`, (err, rows) => {
+            if (err) res.status(500).json({ message: 'List User Gagal' }), console.log(err)
             else res.status(200).json(rows), console.log('Berhasil List Admin')
         })
     }
-   
+
 })
 
 
 // Tambah Promo
-app.post('/promo/add',(req,res)=>{
-    const {nama_promo, kode_promo, jenisPromo, tgl_mulai, tgl_akhir, persen, poto, kuota, deskripsi} = req.body
-    conn.query(`insert into tbl_promo values('','${nama_promo}','${kode_promo}', '${jenisPromo}', '${tgl_mulai}', '${tgl_akhir}','${persen}','','${kuota}','${deskripsi}')`,(err,rows)=>{
-        if(err) res.status(500).json({message : 'Gagal Menambahkan Promo'}), console.log(err)
-        else res.status(200).json({message : 'Promo Berhasil Ditambahkan', idPromo:rows.insertId})
+app.post('/promo/add', (req, res) => {
+    const { nama_promo, kode_promo, jenisPromo, tgl_mulai, tgl_akhir, persen, poto, kuota, deskripsi } = req.body
+    conn.query(`insert into tbl_promo values('','${nama_promo}','${kode_promo}', '${jenisPromo}', '${tgl_mulai}', '${tgl_akhir}','${persen}','','${kuota}','${deskripsi}')`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Menambahkan Promo' }), console.log(err)
+        else res.status(200).json({ message: 'Promo Berhasil Ditambahkan', idPromo: rows.insertId })
     })
 })
 
 app.post('/uploadFoto/add/promo/:idPromo', (req, res) => {
     console.log(req.params.idPromo)
-    if (req.body.poto == ''){
+    if (req.body.poto == '') {
         var filename = ''
     } else {
         var poto = req.body.poto
         var d = Date.now();
         var filename = d + '_IMAGE.jpg';
-    
+
         var binaryData = new Buffer(poto, 'base64').toString('binary')
         // console.log('Test - ' , binaryData)
         fs.writeFile(__dirname + '/images/promo/' + filename, binaryData, 'binary',
@@ -881,41 +914,145 @@ app.post('/uploadFoto/add/promo/:idPromo', (req, res) => {
                 else res.status(200).json({ message: 'success' })
             })
     }
-    
+
     conn.query(`UPDATE tbl_promo SET poto = '${filename}' WHERE id_promo ='${req.params.idPromo}'`)
 })
 
+// List Promo
 
-app.get('/promo/list',(req,res)=>{
-    conn.query(`select * from tbl_promo`,(err,rows)=>{
-        if (err) res.status(500).json({message : 'Gagal Mendapatkan Data'}), console.log(err) 
+app.get('/promo/list', (req, res) => {
+    conn.query(`select * from tbl_promo`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Mendapatkan Data' }), console.log(err)
         else res.status(200).json(rows)
     })
 })
 
 
-app.delete('/promo/delete/:idPromo',(req,res)=>{
-    conn.query(`delete from tbl_promo where id_promo = '${req.params.idPromo}'`,(err,rows)=>{
-        if (err) res.status(500).json({message : 'Promo Gagal DiHapus'}), console.log(err)
-        else res.status(200).json({message : 'Promo Berhasil Dihapus'})
+app.put('/promo/edit/:idPromo', (req, res) => {
+    const { nama_promo, kode_promo, jenisPromo, tgl_mulai, tgl_akhir, persen, poto, kuota, deskripsi } = req.body
+    conn.query(`update tbl_promo set nama_promo ='${nama_promo}' , kode_promo ='${kode_promo}', jenisPromo ='${jenisPromo}', tgl_mulai = '${tgl_mulai}' , tgl_akhir ='${tgl_akhir}' , persen = '${persen}', kuota = '${kuota}',deskripsi = '${deskripsi}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Edit Promo' }), console.log(err)
+        else res.status(200).json({ message: 'Promo Berhasil Di Edit' })
+    })
+})
+
+app.delete('/promo/delete/:idPromo', (req, res) => {
+    conn.query(`delete from tbl_promo where id_promo = '${req.params.idPromo}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Promo Gagal DiHapus' }), console.log(err)
+        else res.status(200).json({ message: 'Promo Berhasil Dihapus' })
     })
 })
 
 
-app.get('/review/app/list',(req,res)=>{
-    conn.query(`select * from tbl_review`,(err,rows)=>{
-        if (err) res.status(500).json({message : 'Gagal Mendapatkan List'}), console.log(err)
+app.get('/review/app/list', (req, res) => {
+    conn.query(`select * from tbl_review`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Mendapatkan List' }), console.log(err)
         else res.status(200).json(rows)
     })
 })
 
 
-app.delete('/review/app/delete/:idReview',(req,res)=>{
-    conn.query(`delete from tbl_review where idReview ='${req.params.idReview}'`,(err,rows)=>{
-        if (err) res.status(500).json({message : 'Gagal Menghapus Review'}), console.log(err)
-        else res.status(200).json({message : 'Berhasil Menghapus Review'})
+app.delete('/review/app/delete/:idReview', (req, res) => {
+    conn.query(`delete from tbl_review where idReview ='${req.params.idReview}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Menghapus Review' }), console.log(err)
+        else res.status(200).json({ message: 'Berhasil Menghapus Review' })
     })
 })
+
+
+app.delete('/delete/user/:username', (req, res) => {
+    conn.query(`delete from tbl_user where username='${req.params.username}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Menghapus User' }), console.log(err)
+        else res.status(200).json({ message: 'Berhasil Menghapus User' })
+    })
+})
+
+
+app.get('/search/:item', (req, res) => {
+    var item = req.params.item
+    if (item == 'Hunian') {
+        conn.query(`select * from tbl_hunian where nm_hunian like '${req.query.nama_hunian}%' order by datePost`, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal Mencari Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (item == 'User') {
+        conn.query(`select * from tbl_user where nama like '${req.query.user}%' and jenis <> 'Admin'`, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal Mencari User' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (item == 'Review') {
+        conn.query(`select * from tbl_review where date_create like '${req.query.date_create}%'`, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal Mencari Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    }
+})
+
+
+// Live Chat
+
+app.post('/livechat/add', (req, res) => {
+    const { chatId, usernameUser, usernameAdmin, usernameSend, role, message, date, time, status } = req.body
+    var queryStr = `INSERT INTO tbl_livechat VALUES ('','${chatId}' ,'${usernameUser}','${usernameAdmin}','${usernameSend}','${role}','${message}', '${date}','${time}','${status}')`;
+    conn.query(queryStr, (err, rows) => {
+        if (err) { res.status(400).json(err), console.log('Gagal Ditambahkan', err) }
+        else { res.status(200).json(rows), console.log('Berhasil Ditambahkan') }
+    })
+})
+
+
+app.get('/livechat/list/admin', (req, res) => {
+    conn.query(`SELECT tbl_livechat.*, tbl_user.poto , tbl_user.nama FROM tbl_livechat INNER JOIN tbl_user ON tbl_user.username = tbl_livechat.usernameUser WHERE tbl_livechat.id IN (SELECT MAX(tbl_livechat.id) FROM tbl_livechat GROUP BY tbl_livechat.usernameUser)`, (err, rows) => {
+        if (err) { res.status(500).json(err) }
+        else res.status(200).json(rows)
+    })
+})
+
+// Delete Chat
+app.delete('/livechat/delete/:idChat', (req, res) => {
+    conn.query(`delete from tbl_livechat where idChat='${req.params.idChat}'`, (err, rows) => {
+        if (err) { res.status(500).json(err) }
+        else { res.status(200).json(rows), console.log('Delete Pesan Berhasil') }
+    })
+})
+
+// Detail Chat
+app.get('/livechat/detail/list', (req, res) => {
+    if (req.query.role === 'Admin') {
+        conn.query(`SELECT * FROM tbl_livechat WHERE usernameUser='${req.query.usernameUser}'`, (err, rows) => {
+            if (err) { res.status(500).json(err), console.log(err) }
+            else { res.status(200).json(rows), console.log(rows) }
+        })
+    } else {
+        conn.query(`SELECT * FROM tbl_livechat WHERE usernameUser='${req.query.username}'`, (err, rows) => {
+            if (err) { res.status(500).json(err), console.log(err) }
+            else { res.status(200).json(rows), console.log(rows) }
+        })
+    }
+})
+
+
+// Tambah Admin
+app.post('/register/admin', (req, res) => {
+    var username = req.body.username
+    var password = req.body.password
+    var team = req.body.team
+    var nama = req.body.nama
+    var email = req.body.email
+    var alamat = req.body.alamat
+    var tel = req.body.tel
+    var kota = req.body.kota
+    var jk = req.body.jk
+    var jenis = 'Admin'
+    var poto = ''
+    var queryStr = `INSERT INTO tbl_user VALUES ('', '${username}', '${password}','${nama}','${email}','${alamat}','${kota}','${tel}','${jk}','${jenis}','${poto}','${team}') `;
+    conn.query(queryStr, (err, rows) => {
+        if (err) res.status(400).json(err), console.log(err)
+        else res.status(200).json(rows)
+    })
+})
+
+
 // Melakukan Koneksi
 const server = http.createServer(app);
 server.listen(8000, () => {
