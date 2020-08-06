@@ -853,7 +853,7 @@ app.get('/hunian/:username', (req, res) => {
 
 // Menampilkan Detail Hunian
 app.get('/hunian/detail/:idHunian', (req, res) => {
-    conn.query(`SELECT * FROM tbl_hunian where idHunian = '${req.params.idHunian}'`, (err, rows) => {
+    conn.query(`select tbl_hunian.*,tbl_user.poto as userPoto, SUM(tbl_kamar.currentPerson) as statusKamarTerisi ,  SUM(tbl_kamar.maxPerson) as statusKamarMaks , SUM(CASE WHEN tbl_kamar.status = 'Kosong' THEN 1 else 0 end) as kamarTersedia , COUNT(tbl_kamar.nama_kamar) as jumlahKamar  from tbl_hunian JOIN tbl_user on tbl_hunian.username = tbl_user.username JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE tbl_hunian.idHunian = '${req.params.idHunian}'`, (err, rows) => {
         if (err) { res.status(500).json(err), console.log(err) }
         else { res.status(200).json(rows[0]), console.log('Success List') }
     })
@@ -1044,7 +1044,7 @@ app.get('/chat/count/unread/:username', (req, res) => {
     if (req.query.jenis == 'Pemilik') {
         queryStr = `SELECT SUM(CASE WHEN status = 'unread' THEN 1 ELSE 0 END) as unread FROM tbl_chat WHERE usernamePemilik = '${req.params.username}'`
     } else if (req.query.jenis == 'Penghuni') {
-        queryStr = `SELECT SUM(CASE WHEN status = 'unread' THEN 1 ELSE 0 END) as unread FROM tbl_chat WHERE usernamePenghuni = '${req.params.username}''`
+        queryStr = `SELECT SUM(CASE WHEN status = 'unread' THEN 1 ELSE 0 END) as unread FROM tbl_chat WHERE usernamePenghuni = '${req.params.username}'`
     }
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
@@ -1085,7 +1085,7 @@ app.post('/password/forget', (req, res) => {
                 //   $set: { reset_key, reset_request_time: new Date() },
                 // });
                 const reset_key = token
-                const link = `http://localhost:3000/reset-password/${reset_key}/${username}`;
+                const link = `http://192.168.100.4:3000/reset-password/${reset_key}/${username}`;
                 const from = 'Homie Help <help.center.homie@gmail.com>';
                 const to = email;
                 const subject = 'Permintaan Reset Password';
@@ -1208,7 +1208,7 @@ app.get('/list/user', (req, res) => {
 // Tambah Promo
 app.post('/promo/add', (req, res) => {
     const { nama_promo, kode_promo, jenisPromo, tgl_mulai, tgl_akhir, persen, poto, kuota, deskripsi, targetPromo, targetUser } = req.body
-    conn.query(`insert into tbl_promo values('','${nama_promo}','${kode_promo}', '${jenisPromo}', '${tgl_mulai}', '${tgl_akhir}','${persen}','','${kuota}','${deskripsi}','${targetPromo}','${targetUser}')`, (err, rows) => {
+    conn.query(`insert into tbl_promo values('','${nama_promo}','${kode_promo}', '${jenisPromo}', '${tgl_mulai}', '${tgl_akhir}','${persen}','','${kuota}','${deskripsi}','${targetPromo}','${targetUser}','')`, (err, rows) => {
         if (err) res.status(500).json({ message: 'Gagal Menambahkan Promo' }), console.log(err)
         else res.status(200).json({ message: 'Promo Berhasil Ditambahkan', idPromo: rows.insertId })
     })
@@ -1288,7 +1288,7 @@ app.delete('/delete/user/:username', (req, res) => {
 app.get('/search/:item', (req, res) => {
     var item = req.params.item
     if (item == 'Hunian') {
-        conn.query(`select * from tbl_hunian where nm_hunian like '${req.query.nama_hunian}%' order by datePost`, (err, rows) => {
+        conn.query(`select * from tbl_hunian where nm_hunian like '%${req.query.nama_hunian}%' order by idHunian`, (err, rows) => {
             if (err) res.status(500).json({ message: 'Gagal Mencari Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
