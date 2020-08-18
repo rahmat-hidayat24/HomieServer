@@ -13,9 +13,9 @@ var nodemailer = require('nodemailer')
 // Koneksi
 const conn = mysql.createConnection({
     host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'homie'
+    user: 'id14640442_homie_database',
+    password: '_Q>06&r=udEFrvlo',
+    database: 'id14640442_homie'
 })
 
 
@@ -65,15 +65,15 @@ app.use('/images/promo', express.static('./images/promo/'));
 // Komponen Login
 
 app.post('/login', (req, res) => {
-    var queryStr =''
-    if(req.query.loginMethod =='email'){
-        queryStr =`select * from tbl_user where email ='${req.query.email}' and password = '${req.query.password}'`
-    } else if (req.query.loginMethod =='tel'){
-        queryStr =`select * from tbl_user where tel ='${req.query.tel}' and password = '${req.query.password}'`
-    } else if (req.query.loginMethod == 'username'){
-        queryStr =`select * from tbl_user where username ='${req.query.username}' and password = '${req.query.password}'`
+    var queryStr = ''
+    if (req.query.loginMethod == 'email') {
+        queryStr = `select * from tbl_user where email ='${req.query.email}' and password = '${req.query.password}'`
+    } else if (req.query.loginMethod == 'tel') {
+        queryStr = `select * from tbl_user where tel ='${req.query.tel}' and password = '${req.query.password}'`
+    } else if (req.query.loginMethod == 'username') {
+        queryStr = `select * from tbl_user where username ='${req.query.username}' and password = '${req.query.password}'`
     }
-    
+
     conn.query(queryStr, (err, rows) => {
         if (err) { res.status(500).json(err) }
         else {
@@ -141,7 +141,7 @@ app.get('/check/:username', (req, res) => {
 app.put('/user/change_password/:username', (req, res) => {
     conn.query(`update tbl_user set password='${req.body.password}' WHERE username='${req.params.username}'`, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
-        else res.status(200).json(rows),console.log('Berhasil Update Password')
+        else res.status(200).json(rows), console.log('Berhasil Update Password')
     })
 })
 
@@ -156,8 +156,8 @@ app.put('/user/update/status/:username', (req, res) => {
 // Profil User
 app.get('/profil/:username', (req, res) => {
     conn.query(`select * from tbl_user where username = '${req.params.username}'`, (err, rows) => {
-        if (err) res.status(500).json(err) , console.log(err)
-        else if(!rows[0] || rows[0] == undefined){res.status(400).json(false)}
+        if (err) res.status(500).json(err), console.log(err)
+        else if (!rows[0] || rows[0] == undefined) { res.status(400).json(false) }
         else res.status(200).json(rows[0])
     })
 })
@@ -282,11 +282,11 @@ app.put(`/homiepay/tambah-debit/:username`, (req, res) => {
 
 
 // Delete Kartu Kredit
-app.put('/homiepay/delete/kartu-debit/:username',(req,res)=>{
+app.put('/homiepay/delete/kartu-debit/:username', (req, res) => {
     console.log(req.params.username)
-    conn.query(`UPDATE tbl_homiepay SET nomorKartu=NULL, maxTopUp=NULL where username='${req.params.username}'`,(err,rows)=>{
-        if (err) res.status(500).json({message : 'Gagal Menghapus Kartu Debit'}), console.log(err)
-        else res.status(200).json({message : 'Berhasil Menghapus Kartu Debit'}), console.log(rows)
+    conn.query(`UPDATE tbl_homiepay SET nomorKartu=NULL, maxTopUp=NULL where username='${req.params.username}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Menghapus Kartu Debit' }), console.log(err)
+        else res.status(200).json({ message: 'Berhasil Menghapus Kartu Debit' }), console.log(rows)
     })
 })
 
@@ -617,20 +617,20 @@ app.put('/update/laporan/masalah/:id', (req, res) => {
 app.post('/shareroom/add', (req, res) => {
     // console.log(req.body)
     conn.query(`select * from tbl_user where username ='${req.body.usernameDiundang}'`, (err, rows) => {
-        if (err) { res.status(500).json(err) , console.log(err)}
+        if (err) { res.status(500).json(err), console.log(err) }
         else {
             if (rows[0] === undefined || rows[0].username !== req.body.usernameDiundang) {
                 res.json({ message: 'Username Tidak Ditemukan' })
-            } else if (rows[0].rows === 'Pemilik' || rows[0].rows === 'Admin'  ) {
-                res.json({ message: 'Gagal Undang Username '+  req.body.usernameDiundang })
-            }else 
+            } else if (rows[0].rows === 'Pemilik' || rows[0].rows === 'Admin') {
+                res.json({ message: 'Gagal Undang Username ' + req.body.usernameDiundang })
+            } else
             // (req.body.usernameDiundang === rows[0].username && rows[0].jenis !== 'Admin' || rows[0].jenis !== 'Pemilik' ) 
             {
                 var data = rows[0]
                 var { idHunian, idKamar, usernamePemilik, usernamePengirim, date_create, time, nama_hunian, nama_kamar, deskripsi, statusPermintaan } = req.body
                 conn.query(`insert into tbl_shareroom values('','${idHunian}','${idKamar}','${usernamePengirim}','${data.username}','${usernamePemilik}','${data.nama}','${date_create}','${time}','${nama_hunian}','${nama_kamar}','${deskripsi}','${statusPermintaan}')`, (err, rows) => {
                     if (err) res.status(500).json(err), console.log(err)
-                    else { res.status(200).json({ message: 'Berhasil Melakukan ShareRoom' , data : data}), console.log('Berhasil') }
+                    else { res.status(200).json({ message: 'Berhasil Melakukan ShareRoom', data: data }), console.log('Berhasil') }
                 })
             }
         }
@@ -716,7 +716,7 @@ app.get('/penghuni/listPembayaran/:idHunian/:pemilik', (req, res) => {
 
 // Tambah Hunian
 app.post('/hunian/add', (req, res) => {
-    var { namaHunian, username, pemilik, tel, alamatHunian, tipeHunian, jenisListrik, penghuni, pet, luasKamar, jlhLantai, jlhKM, fasilitasHunian, hargaHunianDay, hargaHunianWeek, hargaHunianMonth, hargaHunianYear, denda, poto, deskripsi, lat, long, kota,poto360,datePost } = req.body
+    var { namaHunian, username, pemilik, tel, alamatHunian, tipeHunian, jenisListrik, penghuni, pet, luasKamar, jlhLantai, jlhKM, fasilitasHunian, hargaHunianDay, hargaHunianWeek, hargaHunianMonth, hargaHunianYear, denda, poto, deskripsi, lat, long, kota, poto360, datePost } = req.body
     var queryStr = `INSERT INTO tbl_hunian VALUES ('', '${namaHunian}', '${username}','${pemilik}','${tel}','${alamatHunian}','${tipeHunian}', '${penghuni}','${pet}','${luasKamar}','${jenisListrik}','${jlhLantai}','${jlhKM}', '${fasilitasHunian}','${hargaHunianDay}' ,'${hargaHunianWeek}' ,'${hargaHunianMonth}' ,'${hargaHunianYear}' ,'${denda}','${poto}', '${deskripsi}', '${lat}', '${long}','${kota}' , '' ,'${datePost}')`;
     conn.query(queryStr, (err, rows) => {
         if (err) res.status(400).json(err), console.log(err)
@@ -1053,33 +1053,67 @@ app.get('/chat/count/unread/:username', (req, res) => {
 })
 
 
+// Wishlist
+
+// Tambah Wishlist
+app.post('/wishlist/add', (req, res) => {
+    conn.query(`insert into tbl_wishlist values('','${req.body.username}','${req.body.idHunian}')`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Menambahkan Wishlist' })
+        else res.status(200).json({ message: 'Berhasil Menambahkan Wishlist' })
+    })
+})
+
+
+// Check Wishlist
+app.get('/wishlist/check', (req, res) => {
+    conn.query(`select * from tbl_wishlist where idHunian='${req.query.idHunian}' and username='${req.query.username}'`, (err, rows) => {
+        res.status(200).json(rows)
+    })
+})
+
+
+// List WishList
+app.get('/wishlist/list', (req, res) => {
+    conn.query(`select * from tbl_wishlist where username='${req.query.username}'`, (err, rows) => {
+        if (err) res.status(500).json({ message: 'Gagal Mendapatkan List WishList' }), console.log(err)
+        else res.status(200).json(rows)
+    })
+})
+
+app.delete('/wishlist/delete', (req, res) => {
+    conn.query(`delete from tbl_wishlist where idHunian='${req.query.idHunian}' and username='${req.query.username}'`, (err, rows) => {
+        res.status(200).json(rows)
+    })
+})
+
+
 // Forget Password
 app.post('/password/forget', (req, res) => {
     const email = req.body.email
     conn.query(`select username from tbl_user where email='${email}'`, async (err, rows) => {
         if (err) res.status(500).json({ message: 'Email Tidak Terdaftar' }), console.log(err)
         else {
-            if( rows.length == 0 || rows == []){
-                res.send({message : 'Email Tidak Terdaftar'})
+            if (rows.length == 0 || rows == []) {
+                res.send({ message: 'Email Tidak Terdaftar' })
                 console.log('Email Tidak Terdaftar')
-            } else if( rows.length !== 0 || rows !== []) {
+            } else if (rows.length !== 0 || rows !== []) {
                 const username = rows[0].username
                 var payload = {
                     username: rows[0].username,
                 }
                 var token = jwt.sign(payload, secret_key, { expiresIn: '1h' })
-                
+
                 var transporter = nodemailer.createTransport({
                     service: 'gmail',
-                    secure:false,
+                    secure: false,
                     auth: {
-                      user: 'help.center.homie@gmail.com',
-                      pass: 'Homie123'
+                        user: 'help.center.homie@gmail.com',
+                        pass: 'Homie123'
                     }
-                  });
-                  
-                 
-                 
+                });
+
+
+
                 // // Save reset_key dan request time ke db
                 // await User.findByIdAndUpdate(_id, {
                 //   $set: { reset_key, reset_request_time: new Date() },
@@ -1089,9 +1123,9 @@ app.post('/password/forget', (req, res) => {
                 const from = 'Homie Help <help.center.homie@gmail.com>';
                 const to = email;
                 const subject = 'Permintaan Reset Password';
-    
+
                 const text = `Kami menerima permintaan reset password dari akun Anda. Jika Anda merasa tidak pernah melakukan permintaan reset password, abaikan email ini. Klik link berikut untuk melakukan reset password ${link}`;
-    
+
                 const html = `
                       <p>Kami menerima permintaan reset password dari akun yang terhubung ke email ini.</p>
                       <p>Anda bisa melakukan reset password melalui link di bawah ini yang akan valid sampai 1 jam ke depan.</p><br />
@@ -1099,19 +1133,19 @@ app.post('/password/forget', (req, res) => {
                       <p>Jika Anda tidak melakukan permintaan reset password, silahkan abaikan email ini.</p>
                       <p>Terima kasih</p>
                     `;
-    
-                   
-    
-                const options = { from, to, subject, text , html};
-                transporter.sendMail(options, function(err, info){
+
+
+
+                const options = { from, to, subject, text, html };
+                transporter.sendMail(options, function (err, info) {
                     if (err) {
                         console.log(err);
-                      } else {
+                    } else {
                         console.log('Email sent: ' + info.response);
-                      }
+                    }
                 });
                 transporter.close();
-                res.status(200).json({message : 'Link Reset Password Berhasil Terkirim'})
+                res.status(200).json({ message: 'Link Reset Password Berhasil Terkirim' })
             }
         }
     })
@@ -1119,19 +1153,18 @@ app.post('/password/forget', (req, res) => {
 
 
 // Filter Hunian
-app.get('/home/hunian/filter',(req,res)=>{
+app.get('/home/hunian/filter', (req, res) => {
     // const kota = req.query.kota
     const getNamaFasilitas = req.query.namaFasilitas.split(',')
-    var test = getNamaFasilitas.map(function(e,i){
-        return e.replace('%20',' ')
+    var test = getNamaFasilitas.map(function (e, i) {
+        return e.replace('%20', ' ')
     })
     const tipeAkomodasi = req.query.tipeAkomodasi
     const harga = req.query.harga
     const namaFasilitas = test.join()
+    const jenis_penghuni = req.query.jk
 
-    console.log(namaFasilitas)
-
-    const queryFull = `SELECT tbl_hunian.* FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}' AND harga_hunian_month BETWEEN '0' AND '${harga}' AND tipe_hunian='${tipeAkomodasi}' GROUP BY tbl_hunian.idHunian`
+    const queryFull = `SELECT tbl_hunian.* FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}' AND harga_hunian_month BETWEEN '0' AND '${harga}' AND tipe_hunian='${tipeAkomodasi}' AND penghuni='${jenis_penghuni}' GROUP BY tbl_hunian.idHunian`
 
     const queryFilterHarga = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE harga_hunian_month BETWEEN '0' AND '${harga}' GROUP BY tbl_hunian.idHunian`
 
@@ -1145,40 +1178,88 @@ app.get('/home/hunian/filter',(req,res)=>{
 
     const queryFasilitasDanTipeAkomodasi = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}'  AND tipe_hunian='${tipeAkomodasi}' GROUP BY tbl_hunian.idHunian `
 
+    const queryJk = `SELECT tbl_hunian.* FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE penghuni LIKE '${jenis_penghuni}' GROUP BY idHunian`
 
-    if(namaFasilitas !== '' && harga =='0' && !tipeAkomodasi){
-        conn.query(queryNamaFasilitas,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    const queryJkDanHarga = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE harga_hunian_month BETWEEN '0' AND '${harga}' AND penghuni LIKE '${jenis_penghuni}' GROUP BY tbl_hunian.idHunian`
+
+    const queryJkDanFasilitas = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE penghuni LIKE '${jenis_penghuni}' AND CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}' GROUP BY tbl_hunian.idHunian`
+
+    const queryJKdanTipeAkomodasi = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE penghuni LIKE '${jenis_penghuni}' AND tipe_hunian='${tipeAkomodasi}' GROUP BY tbl_hunian.idHunian`
+
+    const queryJkdanHargadanFasilitas = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE harga_hunian_month BETWEEN '0' AND '${harga}' AND penghuni LIKE '${jenis_penghuni}' AND CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}' GROUP BY tbl_hunian.idHunian`
+
+    const queryJkdanHargadanAkomodasi = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE harga_hunian_month BETWEEN '0' AND '${harga}' AND penghuni LIKE '${jenis_penghuni}' AND tipe_hunian='${tipeAkomodasi}' GROUP BY tbl_hunian.idHunian`
+
+    const queryJkdanFasilitasDanAkomodasi = `SELECT * FROM tbl_hunian JOIN tbl_kamar ON tbl_hunian.idHunian = tbl_kamar.idHunian WHERE AND tipe_hunian='${tipeAkomodasi}' AND penghuni LIKE '${jenis_penghuni}' AND CONCAT(tbl_hunian.nama_fasilitas ,',',tbl_kamar.nama_fasilitas) LIKE '${namaFasilitas}' GROUP BY tbl_hunian.idHunian`
+
+    if (namaFasilitas !== '' && harga == '0' && !tipeAkomodasi && jenis_penghuni == '') {
+        conn.query(queryNamaFasilitas, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(!namaFasilitas && harga!=='0' && !tipeAkomodasi){
-        conn.query(queryFilterHarga,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (!namaFasilitas && harga !== '0' && !tipeAkomodasi && jenis_penghuni == '') {
+        conn.query(queryFilterHarga, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(!namaFasilitas && harga == '0' && tipeAkomodasi !==''){
-        conn.query(queryTipeAkomodasi,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (!namaFasilitas && harga == '0' && tipeAkomodasi !== '' && jenis_penghuni == '') {
+        conn.query(queryTipeAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(namaFasilitas && harga !== '0' && !tipeAkomodasi ){
-        conn.query(queryHargaDanFasilitas,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (namaFasilitas && harga !== '0' && !tipeAkomodasi && jenis_penghuni == '') {
+        conn.query(queryHargaDanFasilitas, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(!namaFasilitas && harga !== '0' && tipeAkomodasi !==''){
-        conn.query(queryHargaDanTipeAkomodasi,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (!namaFasilitas && harga !== '0' && tipeAkomodasi !== '' && jenis_penghuni == '') {
+        conn.query(queryHargaDanTipeAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(namaFasilitas && harga == '0' && tipeAkomodasi !==''){
-        conn.query(queryFasilitasDanTipeAkomodasi,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (namaFasilitas && harga == '0' && tipeAkomodasi !== '' && jenis_penghuni == '') {
+        conn.query(queryFasilitasDanTipeAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
-    } else if(namaFasilitas && harga !=='0' && tipeAkomodasi ){
-        conn.query(queryFull,(err,rows) =>{
-            if(err) res.status(500).json({message : 'Gagal List Hunian'}), console.log(err)
+    } else if (!namaFasilitas && harga == '0' && !tipeAkomodasi && jenis_penghuni !== '') {
+        conn.query(queryJk, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (!namaFasilitas && harga !== '0' && !tipeAkomodasi && jenis_penghuni !== '') {
+        conn.query(queryJkDanHarga, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (namaFasilitas!=='' && harga == '0' && !tipeAkomodasi && jenis_penghuni !== '') {
+        conn.query(queryJkDanFasilitas, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (!namaFasilitas && harga == '0' && tipeAkomodasi!=='' && jenis_penghuni !== '') {
+        conn.query(queryJKdanTipeAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (namaFasilitas!=='' && harga !== '0' && !tipeAkomodasi && jenis_penghuni !== '') {
+        conn.query(queryJkdanHargadanFasilitas, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (!namaFasilitas && harga !== '0' && tipeAkomodasi!=='' && jenis_penghuni !== '') {
+        conn.query(queryJkdanHargadanAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    } else if (namaFasilitas !=='' && harga == '0' && tipeAkomodasi!=='' && jenis_penghuni !== '') {
+        conn.query(queryJkdanFasilitasDanAkomodasi, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
+            else res.status(200).json(rows)
+        })
+    }  else if (namaFasilitas && harga !== '0' && tipeAkomodasi) {
+        conn.query(queryFull, (err, rows) => {
+            if (err) res.status(500).json({ message: 'Gagal List Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
     }
@@ -1289,7 +1370,13 @@ app.get('/search/:item', (req, res) => {
     var item = req.params.item
     if (item == 'Hunian') {
         conn.query(`select * from tbl_hunian where nm_hunian like '%${req.query.nama_hunian}%' order by idHunian`, (err, rows) => {
-            if (err) res.status(500).json({ message: 'Gagal Mencari Hunian' }), console.log(err)
+            if (!rows || rows.length == 0) {
+                conn.query(`select * from tbl_hunian where kota like '%${req.query.nama_hunian}%' order by idHunian`, (err, rows) => {
+                    if (err) res.status(500).json({ message: 'Gagal Mencari Hunian Berdasarkan Kota' }), console.log(err)
+                    else res.status(200).json(rows)
+                })
+            }
+            else if (err) res.status(500).json({ message: 'Gagal Mencari Hunian' }), console.log(err)
             else res.status(200).json(rows)
         })
     } else if (item == 'User') {
@@ -1395,6 +1482,6 @@ app.get('/statistik/data/user/kota', (req, res) => {
 
 // Melakukan Koneksi
 const server = http.createServer(app);
-server.listen(8000, () => {
+server.listen(process.env.PORT||8000, () => {
     console.log('Connect With Port 8000')
 })
