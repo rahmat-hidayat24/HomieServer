@@ -12,7 +12,7 @@ var nodemailer = require('nodemailer')
 
 // Koneksi
 const conn = mysql.createConnection({
-    host: 'https://databases.000webhost.com/',
+    host: 'localhost',
     user: 'id14640442_homie_database',
     password: '_Q>06&r=udEFrvlo',
     database: 'id14640442_homie'
